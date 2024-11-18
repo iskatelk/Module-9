@@ -15,23 +15,23 @@ abstract class Storage
 
 class FileStorage extends Storage
 {
+    private $directory = 'C:/xampp/htdocs/MODULE-9/storage';
+    public $listObjects = [];
     public function create(TelegraphText $object)
     {
-        $str = $object->slug;
-        $slug1 = substr($str, 0, strlen($str) - 4);
+        $inputSlug = $object->slug;
+        $slugTemp = explode(".", $inputSlug);
+
         $i = 1;
-
-        $slug = $slug1 . '_' . date('d.m.Y H') . "_{$i}.txt";
-        while (file_exists($slug)) {
+        do {
+            $slug = $slugTemp[0] . '_' . date('d-m-Y') . "_{$i}.txt";
             $i++;
-            $slug = $slug1 . '_' . date('d.m.Y H') . "_{$i}.txt";
-
         }
+        while (file_exists("{$this->directory}" . "/" . "{$slug}"));
 
-        $testText1 = serialize($object);
-        file_put_contents("{$slug}", "{$testText1}");
-        $this->slug = $slug;
-        return $this->slug;
+        $text = serialize($object);
+        file_put_contents("{$this->directory}" . "/" . "{$slug}", "{$text}");
+        return $this->slug = $slug;
     }
 
     public function read()
@@ -48,6 +48,13 @@ class FileStorage extends Storage
 
     public function list()
     {
+        $listFiles = scandir($this->directory);
+        $resultList = array_filter($listFiles, fn($item) => !is_dir($item));
+
+        foreach ($resultList as $item) {
+            $this->listObjects[] = unserialize(file_get_contents($this->directory . "/" . $item));
+        }
+
     }
 }
 
@@ -112,6 +119,7 @@ $telegraph2 = new FileStorage;
 $telegraph1->title = 'Privet3';
 $telegraph1->text = 'Hi, World3';
 
+// $telegraph2->create($telegraph1);
 
-
-$telegraph2->create($telegraph1);
+$telegraph2->list();
+print_r($telegraph2->listObjects);
